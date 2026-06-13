@@ -532,7 +532,7 @@ let currentPedidoId = null;
 let checklistTareas = [];
 let checklistState = {}; // { [tareaId]: boolean } — en memoria, se resetea al recargar
 let fondoCaja = 300;
-const DENOMINACIONES = [500,200,100,50,20,10,5,2,1,0.5,0.2,0.1];
+const DENOMINACIONES = [0.1,0.2,0.5,1,2,5,10,20,50,100,200,500];
 
 // ─── Init ──────────────────────────────────────────────────────
 async function init() {
@@ -1413,7 +1413,7 @@ function renderCaja() {
   const c = document.getElementById('caja-container');
   let html = '<div class="card"><div class="card-title">💶 Conteo de efectivo</div><table><tbody>';
   DENOMINACIONES.forEach(d => {
-    const label = d >= 5 ? `${d} €` : `${(d*100).toFixed(0)} cts`;
+    const label = d >= 1 ? `${d} €` : `${(d*100).toFixed(0)} cts`;
     const idAttr = `den-${String(d).replace('.','_')}`;
     html += `<tr>
       <td style="width:90px;">${label}</td>
@@ -1424,29 +1424,30 @@ function renderCaja() {
   html += `</tbody></table></div>
 
   <div class="card">
+    <div class="card-title">📊 Resumen</div>
     <div class="form-row">
       <div class="form-group">
         <label>Total efectivo contado</label>
         <input type="text" id="caja-efectivo-total" value="0,00 €" disabled style="font-weight:700;font-size:16px;">
       </div>
       <div class="form-group">
-        <label>TOTAL VISAS (€)</label>
-        <input type="number" min="0" step="0.01" inputmode="decimal" id="caja-tarjetas" placeholder="0.00" oninput="recalcCaja()">
+        <label>Fondo de caja</label>
+        <input type="text" id="caja-fondo" value="${fondoCaja.toFixed(2).replace('.',',')} €" disabled style="font-weight:700;font-size:16px;">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Venta total (efectivo + visas)</label>
-        <input type="text" id="caja-venta-total" value="0,00 €" disabled style="font-weight:700;font-size:16px;color:var(--accent);">
+        <label>TOTAL RECEPCIÓN (efectivo − fondo)</label>
+        <input type="text" id="caja-deposito" value="0,00 €" disabled style="font-weight:700;font-size:16px;color:var(--green);">
       </div>
       <div class="form-group">
-        <label>Fondo de caja (€)</label>
-        <input type="text" id="caja-fondo" value="${fondoCaja.toFixed(2).replace('.',',')} €" disabled>
+        <label>TOTAL VISAS (€)</label>
+        <input type="number" min="0" step="0.01" inputmode="decimal" id="caja-tarjetas" placeholder="0.00" oninput="recalcCaja()" style="font-weight:700;font-size:16px;color:var(--accent);">
       </div>
     </div>
     <div class="form-group">
-      <label>TOTAL RECEPCIÓN (efectivo contado − fondo de caja)</label>
-      <input type="text" id="caja-deposito" value="0,00 €" disabled style="font-weight:700;font-size:18px;color:var(--green);">
+      <label>TOTAL PRODUCCIÓN NETO (efectivo + visas)</label>
+      <input type="text" id="caja-venta-total" value="0,00 €" disabled style="font-weight:700;font-size:16px;color:var(--accent);">
     </div>
   </div>
 
@@ -1507,7 +1508,7 @@ function renderDesgloseRecepcion(totalEfectivo, totalRecepcion) {
 
   let restante = Math.round(totalRecepcion * 100); // trabajar en céntimos para evitar errores de float
   const desglose = [];
-  for (const d of DENOMINACIONES) {
+  for (const d of [...DENOMINACIONES].reverse()) { // de mayor a menor
     const valorCent = Math.round(d * 100);
     const maxPorDisponible = disponible[d];
     const maxPorImporte = Math.floor(restante / valorCent);
@@ -1517,22 +1518,26 @@ function renderDesgloseRecepcion(totalEfectivo, totalRecepcion) {
       restante -= usar * valorCent;
     }
   }
+  desglose.reverse(); // mostrar de menor a mayor, igual que el conteo
 
   card.style.display = 'block';
   if (restante > 0) {
     cont.innerHTML = `<div class="alert alert-warn">⚠️ No hay suficientes denominaciones contadas para componer exactamente ${fmtEUR(totalRecepcion)}. Faltan ${fmtEUR(restante/100)} en denominaciones disponibles.</div>` +
-      (desglose.length ? renderDesgloseTable(desglose) : '');
+      (desglose.length ? renderDesgloseTable(desglose, totalRecepcion) : '');
     return;
   }
 
-  cont.innerHTML = renderDesgloseTable(desglose);
+  cont.innerHTML = renderDesgloseTable(desglose, totalRecepcion);
 }
 
-function renderDesgloseTable(desglose) {
-  return `<table><tbody>${desglose.map(({d,cant}) => {
-    const label = d >= 5 ? `${d} €` : `${(d*100).toFixed(0)} cts`;
+function renderDesgloseTable(desglose, total) {
+  const filas = desglose.map(({d,cant}) => {
+    const label = d >= 1 ? `${d} €` : `${(d*100).toFixed(0)} cts`;
     return `<tr><td>${label}</td><td style="text-align:right;font-weight:600;">${cant} ud${cant!==1?'s':''}</td><td style="text-align:right;color:var(--text2);">${fmtEUR(cant*d)}</td></tr>`;
-  }).join('')}</tbody></table>`;
+  }).join('');
+  const totalSum = desglose.reduce((acc,{d,cant}) => acc + d*cant, 0);
+  const totalRow = `<tr style="border-top:2px solid var(--border2);font-weight:700;"><td colspan="2">Total</td><td style="text-align:right;">${fmtEUR(total !== undefined ? total : totalSum)}</td></tr>`;
+  return `<table><tbody>${filas}${totalRow}</tbody></table>`;
 }
 
 
