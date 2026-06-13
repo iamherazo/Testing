@@ -189,6 +189,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div class="nav-brand">🍸 <span>Bar</span>Inventory</div>
   <div class="nav-section active" onclick="showSection('pedidos',this)">📋 Pedidos</div>
   <div class="nav-section" onclick="showSection('cierre',this)">🔒 Cierre</div>
+  <div class="nav-section" onclick="showSection('admin',this)">⚙️ Administrar</div>
 </nav>
 
 <!-- ============ SECCIÓN PEDIDOS ============ -->
@@ -197,7 +198,6 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div class="nav-tab active" onclick="showView('pedido-noche',this)">📋 Pedido Noche</div>
   <div class="nav-tab" onclick="showView('pedido-manana',this)">🌅 Recogida Mañana</div>
   <div class="nav-tab" onclick="showView('historial',this)">📊 Historial</div>
-  <div class="nav-tab" onclick="showView('admin',this)">⚙️ Administrar</div>
 </div>
 
 <!-- ============ PEDIDO NOCHE ============ -->
@@ -289,9 +289,11 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div id="h-sin-stock-alert"></div>
   <div id="h-lista"></div>
 </div>
+</div><!-- /section-pedidos -->
 
-<!-- ============ ADMIN ============ -->
-<div id="view-admin" class="view">
+<!-- ============ SECCIÓN ADMINISTRAR ============ -->
+<div id="section-admin" class="section">
+<div id="view-admin" class="view active">
   <div class="view-tabs">
     <div class="view-tab active" onclick="showAdminTab('personal')">👥 Personal</div>
     <div class="view-tab" onclick="showAdminTab('productos')">📦 Productos</div>
@@ -361,13 +363,13 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
       <div class="card-title">💰 Fondo de caja</div>
       <div class="form-group">
         <label>Importe del fondo (€)</label>
-        <input type="number" id="admin-fondo-caja" step="0.01" value="300">
+        <input type="number" id="admin-fondo-caja" step="0.01" value="300" inputmode="decimal">
       </div>
       <button class="btn-primary btn-sm" onclick="guardarFondoCaja()">Guardar</button>
     </div>
   </div>
-</div>
-</div><!-- /section-pedidos -->
+</div><!-- /view-admin -->
+</div><!-- /section-admin -->
 
 <!-- ============ SECCIÓN CIERRE ============ -->
 <div id="section-cierre" class="section">
@@ -530,7 +532,7 @@ let currentPedidoId = null;
 let checklistTareas = [];
 let checklistState = {}; // { [tareaId]: boolean } — en memoria, se resetea al recargar
 let fondoCaja = 300;
-const DENOMINACIONES = [500,200,100,50,20,10,5,2,1,0.5,0.2,0.1,0.05,0.02,0.01];
+const DENOMINACIONES = [500,200,100,50,20,10,5,2,1,0.5,0.2,0.1];
 
 // ─── Init ──────────────────────────────────────────────────────
 async function init() {
@@ -566,6 +568,7 @@ function showSection(name, el) {
   document.getElementById(`section-${name}`).classList.add('active');
   if (el) el.classList.add('active');
   if (name === 'cierre') initCierre();
+  if (name === 'admin') loadAdmin();
 }
 
 function showView(name, el) {
@@ -575,7 +578,6 @@ function showView(name, el) {
   if (el) el.classList.add('active');
   if (name === 'pedido-manana') loadPedidosPendientes();
   if (name === 'historial') loadHistorial();
-  if (name === 'admin') loadAdmin();
 }
 
 function showAdminTab(tab) {
@@ -1415,7 +1417,7 @@ function renderCaja() {
     const idAttr = `den-${String(d).replace('.','_')}`;
     html += `<tr>
       <td style="width:90px;">${label}</td>
-      <td><input type="number" min="0" id="${idAttr}" placeholder="0" oninput="recalcCaja()" style="width:90px;"></td>
+      <td><input type="number" min="0" step="1" inputmode="numeric" id="${idAttr}" placeholder="0" oninput="recalcCaja()" style="width:90px;"></td>
       <td style="text-align:right;color:var(--text2);font-size:13px;" id="${idAttr}-sub">0,00 €</td>
     </tr>`;
   });
@@ -1428,13 +1430,13 @@ function renderCaja() {
         <input type="text" id="caja-efectivo-total" value="0,00 €" disabled style="font-weight:700;font-size:16px;">
       </div>
       <div class="form-group">
-        <label>Total tarjetas (€)</label>
-        <input type="number" min="0" step="0.01" id="caja-tarjetas" placeholder="0.00" oninput="recalcCaja()">
+        <label>TOTAL VISAS (€)</label>
+        <input type="number" min="0" step="0.01" inputmode="decimal" id="caja-tarjetas" placeholder="0.00" oninput="recalcCaja()">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Venta total (efectivo + tarjetas)</label>
+        <label>Venta total (efectivo + visas)</label>
         <input type="text" id="caja-venta-total" value="0,00 €" disabled style="font-weight:700;font-size:16px;color:var(--accent);">
       </div>
       <div class="form-group">
@@ -1443,13 +1445,13 @@ function renderCaja() {
       </div>
     </div>
     <div class="form-group">
-      <label>A depositar (efectivo contado − fondo de caja)</label>
-      <input type="text" id="caja-depositar" value="0,00 €" disabled style="font-weight:700;font-size:18px;color:var(--green);">
+      <label>TOTAL RECEPCIÓN (efectivo contado − fondo de caja)</label>
+      <input type="text" id="caja-deposito" value="0,00 €" disabled style="font-weight:700;font-size:18px;color:var(--green);">
     </div>
   </div>
 
   <div class="card" id="caja-desglose-card" style="display:none;">
-    <div class="card-title">💵 Desglose a dejar como fondo (${fondoCaja.toFixed(2).replace('.',',')} €)</div>
+    <div class="card-title">💵 Desglose para subir a recepción</div>
     <div id="caja-desglose"></div>
   </div>`;
   c.innerHTML = html;
@@ -1469,26 +1471,33 @@ function recalcCaja() {
     totalEfectivo += sub;
     document.getElementById(`${idAttr}-sub`).textContent = fmtEUR(sub);
   });
-  const tarjetas = parseFloat(document.getElementById('caja-tarjetas').value) || 0;
-  const ventaTotal = totalEfectivo + tarjetas;
-  const aDepositar = totalEfectivo - fondoCaja;
+  const visas = parseFloat(document.getElementById('caja-tarjetas').value) || 0;
+  const ventaTotal = totalEfectivo + visas;
+  const totalRecepcion = totalEfectivo - fondoCaja;
 
   document.getElementById('caja-efectivo-total').value = fmtEUR(totalEfectivo);
   document.getElementById('caja-venta-total').value = fmtEUR(ventaTotal);
-  document.getElementById('caja-depositar').value = fmtEUR(Math.max(aDepositar, 0));
+  document.getElementById('caja-deposito').value = fmtEUR(totalRecepcion);
 
-  renderDesgloseFondo(totalEfectivo);
+  renderDesgloseRecepcion(totalEfectivo, totalRecepcion);
 }
 
-// Calcula cómo armar el fondo de caja desde las denominaciones más grandes
-// a las más pequeñas, usando lo que hay disponible en el conteo.
-function renderDesgloseFondo(totalEfectivo) {
+// Calcula, de mayor a menor denominación, qué billetes/monedas subir a
+// recepción para que en caja queden exactamente los 300€ de fondo.
+function renderDesgloseRecepcion(totalEfectivo, totalRecepcion) {
   const card = document.getElementById('caja-desglose-card');
   const cont = document.getElementById('caja-desglose');
-  if (totalEfectivo < fondoCaja) {
-    card.style.display = 'none';
+
+  if (totalRecepcion <= 0) {
+    card.style.display = 'block';
+    if (totalRecepcion === 0) {
+      cont.innerHTML = `<div class="alert alert-warn">El efectivo contado coincide exactamente con el fondo de caja (${fondoCaja.toFixed(2).replace('.',',')} €). No hay nada que subir a recepción.</div>`;
+    } else {
+      cont.innerHTML = `<div class="alert alert-warn">⚠️ El efectivo contado (${fmtEUR(totalEfectivo)}) es menor que el fondo de caja (${fondoCaja.toFixed(2).replace('.',',')} €). Falta ${fmtEUR(Math.abs(totalRecepcion))} para completar el fondo.</div>`;
+    }
     return;
   }
+
   // Disponibilidad real introducida por el usuario
   const disponible = {};
   DENOMINACIONES.forEach(d => {
@@ -1496,7 +1505,7 @@ function renderDesgloseFondo(totalEfectivo) {
     disponible[d] = parseInt(document.getElementById(idAttr).value) || 0;
   });
 
-  let restante = Math.round(fondoCaja * 100); // trabajar en céntimos para evitar errores de float
+  let restante = Math.round(totalRecepcion * 100); // trabajar en céntimos para evitar errores de float
   const desglose = [];
   for (const d of DENOMINACIONES) {
     const valorCent = Math.round(d * 100);
@@ -1509,14 +1518,13 @@ function renderDesgloseFondo(totalEfectivo) {
     }
   }
 
+  card.style.display = 'block';
   if (restante > 0) {
-    card.style.display = 'block';
-    cont.innerHTML = `<div class="alert alert-warn">⚠️ No hay suficientes denominaciones contadas para componer exactamente el fondo de ${fondoCaja.toFixed(2).replace('.',',')} €. Faltan ${fmtEUR(restante/100)} en denominaciones disponibles.</div>` +
+    cont.innerHTML = `<div class="alert alert-warn">⚠️ No hay suficientes denominaciones contadas para componer exactamente ${fmtEUR(totalRecepcion)}. Faltan ${fmtEUR(restante/100)} en denominaciones disponibles.</div>` +
       (desglose.length ? renderDesgloseTable(desglose) : '');
     return;
   }
 
-  card.style.display = 'block';
   cont.innerHTML = renderDesgloseTable(desglose);
 }
 
@@ -1526,6 +1534,7 @@ function renderDesgloseTable(desglose) {
     return `<tr><td>${label}</td><td style="text-align:right;font-weight:600;">${cant} ud${cant!==1?'s':''}</td><td style="text-align:right;color:var(--text2);">${fmtEUR(cant*d)}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
+
 
 // ─── Admin: Tareas Checklist ─────────────────────────────────────
 async function renderChecklistAdmin() {
