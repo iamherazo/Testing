@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#F5F5F7">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Pedidos">
@@ -31,6 +32,36 @@
   --radius: 16px;
   --radius-sm: 10px;
   --sf: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+  /* Texto sobre fondos de color suave (badges, alerts, btn-success) */
+  --text-on-blue: var(--text-on-blue);
+  --text-on-purple: var(--text-on-purple);
+  --text-on-amber: var(--text-on-amber);
+  --text-on-green: var(--text-on-green);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --bg2: #1C1C1E;
+    --bg3: #2C2C2E;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #F5F5F7;
+    --text2: #98989D;
+    --text3: #6E6E73;
+    --accent: #0A84FF;
+    --accent2: #409CFF;
+    --green: #30D158;
+    --amber: #FF9F0A;
+    --red: #FF453A;
+    --piscina: #0A84FF;
+    --lobby: #BF5AF2;
+    /* Texto sobre fondos de color suave: tonos claros para contraste en oscuro */
+    --text-on-blue: #6FB6FF;
+    --text-on-purple: #DA9CF0;
+    --text-on-amber: #FFC56B;
+    --text-on-green: #6FE39B;
+  }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
@@ -77,7 +108,7 @@ button:active { transform: scale(0.98); }
 .btn-secondary:hover { background: var(--bg3); }
 .btn-danger { background: rgba(255,69,58,0.1); color: var(--red); border: 1px solid rgba(255,69,58,0.2); }
 .btn-danger:hover { background: rgba(255,69,58,0.18); }
-.btn-success { background: rgba(48,209,88,0.12); color: #1A8A3D; border: 1px solid rgba(48,209,88,0.3); }
+.btn-success { background: rgba(48,209,88,0.12); color: var(--text-on-green); border: 1px solid rgba(48,209,88,0.3); }
 .btn-success:hover { background: rgba(48,209,88,0.2); }
 .btn-sm { padding: 7px 14px; font-size: 13px; min-height: 32px; }
 .btn-icon { padding: 8px; border-radius: 10px; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); font-size: 17px; line-height: 1; min-height: 36px; }
@@ -94,10 +125,10 @@ select option { background: var(--bg2); }
 
 /* BADGES */
 .badge { display: inline-block; padding: 4px 12px; border-radius: 980px; font-size: 12px; font-weight: 600; }
-.badge-piscina { background: rgba(10,132,255,0.1); color: #0860C7; }
-.badge-lobby { background: rgba(175,82,222,0.1); color: #8A37B0; }
-.badge-pendiente { background: rgba(255,159,10,0.12); color: #B25E00; }
-.badge-completado { background: rgba(48,209,88,0.12); color: #1A8A3D; }
+.badge-piscina { background: rgba(10,132,255,0.1); color: var(--text-on-blue); }
+.badge-lobby { background: rgba(175,82,222,0.1); color: var(--text-on-purple); }
+.badge-pendiente { background: rgba(255,159,10,0.12); color: var(--text-on-amber); }
+.badge-completado { background: rgba(48,209,88,0.12); color: var(--text-on-green); }
 
 /* TABLES */
 .tbl-wrap { overflow-x: auto; }
@@ -132,9 +163,9 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 
 /* ALERTS */
 .alert { padding: 13px 16px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 16px; }
-.alert-info { background: rgba(0,113,227,0.08); border: 1px solid rgba(0,113,227,0.18); color: #0860C7; }
-.alert-warn { background: rgba(255,159,10,0.1); border: 1px solid rgba(255,159,10,0.22); color: #B25E00; }
-.alert-success { background: rgba(48,209,88,0.1); border: 1px solid rgba(48,209,88,0.22); color: #1A8A3D; }
+.alert-info { background: rgba(0,113,227,0.08); border: 1px solid rgba(0,113,227,0.18); color: var(--text-on-blue); }
+.alert-warn { background: rgba(255,159,10,0.1); border: 1px solid rgba(255,159,10,0.22); color: var(--text-on-amber); }
+.alert-success { background: rgba(48,209,88,0.1); border: 1px solid rgba(48,209,88,0.22); color: var(--text-on-green); }
 
 /* ACCORDION */
 .reg-body { padding: 8px 0 4px; }
@@ -150,7 +181,7 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 .fam-header-title { font-size: 13px; font-weight: 600; color: var(--text); }
 .fam-arrow { font-size: 11px; color: var(--text3); transition: transform .2s; }
 .fam-header.open .fam-arrow { transform: rotate(90deg); }
-.fam-badge { font-size: 11px; font-weight: 700; color: #1A8A3D; background: rgba(48,209,88,0.12); padding: 3px 10px; border-radius: 980px; display: none; }
+.fam-badge { font-size: 11px; font-weight: 700; color: var(--text-on-green); background: rgba(48,209,88,0.12); padding: 3px 10px; border-radius: 980px; display: none; }
 .fam-badge.on { display: inline-block; }
 
 /* SPINNER */
@@ -181,8 +212,8 @@ input[type=number] { -moz-appearance: textfield; }
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .qty-ctrl { display: flex; align-items: center; gap: 6px; }
-.qty-ctrl button { width: 40px; height: 40px; padding: 0; border-radius: 50%; color: #fff; font-size: 20px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; min-height: 40px; }
-.qty-ctrl input { width: 52px; text-align: center; padding: 8px 4px; font-size: 16px; font-weight: 600; min-height: 40px; }
+.qty-ctrl button { width: 44px; height: 44px; padding: 0; border-radius: 50%; color: #fff; font-size: 21px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; min-height: 44px; }
+.qty-ctrl input { width: 52px; text-align: center; padding: 8px 4px; font-size: 16px; font-weight: 600; min-height: 44px; }
 .qty-ctrl .btn-minus { background: var(--red); } .qty-ctrl .btn-minus:active { background: #D6362F; } .qty-ctrl .btn-plus { background: var(--green); } .qty-ctrl .btn-plus:active { background: #25A847; }
 
 /* EMPTY STATE */
@@ -235,6 +266,14 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .icon-amber { background: rgba(255,159,10,0.12); }
 .icon-red { background: rgba(255,69,58,0.1); }
 
+/* SKELETON LOADERS */
+.skeleton-card { display: block; }
+.skeleton-line { height: 11px; border-radius: 6px; background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease-in-out infinite; }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; }
+.skeleton-row .skeleton-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease-in-out infinite; }
+.skeleton-row .skeleton-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
 </style>
 </head>
 <body>
@@ -252,6 +291,15 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   </div>
 
   <div class="home-section" style="margin-top:16px;">
+    <div id="home-todo-ok" style="display:none;">
+      <div class="alert alert-success" style="margin-bottom:0;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">✅</span>
+        <div>
+          <div style="font-weight:600;">Todo en orden</div>
+          <div style="font-size:12px;opacity:.85;">No hay pedidos pendientes ni alertas de stock</div>
+        </div>
+      </div>
+    </div>
     <div id="home-pendientes-banner"></div>
   </div>
 
@@ -284,17 +332,23 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div class="home-section">
     <div class="home-section-label">Este mes</div>
     <div class="stats-grid" id="home-stats">
-      <div class="loading"><div class="spinner"></div> Cargando...</div>
+      <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+      <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+      <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+      <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
     </div>
   </div>
 
-  <div class="home-section">
+  <div class="home-section" id="home-alertas-section">
     <div class="home-section-header">
       <div class="home-section-label" style="margin-bottom:0;">Alertas sin stock</div>
       <span class="home-section-action" onclick="goSection('pedidos','historial')">Ver todas</span>
     </div>
     <div id="home-alertas">
-      <div class="loading"><div class="spinner"></div> Cargando...</div>
+      <div class="home-list-card">
+        <div class="skeleton-row"><div class="skeleton-icon"></div><div class="skeleton-text"><div class="skeleton-line" style="width:70%;"></div><div class="skeleton-line" style="width:40%;"></div></div></div>
+        <div class="skeleton-row"><div class="skeleton-icon"></div><div class="skeleton-text"><div class="skeleton-line" style="width:55%;"></div><div class="skeleton-line" style="width:35%;"></div></div></div>
+      </div>
     </div>
   </div>
 
@@ -364,7 +418,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 
   <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
     <button class="btn-secondary" onclick="clearPedido()">Limpiar</button>
-    <button class="btn-primary" onclick="guardarPedido()">✓ Guardar pedido</button>
+    <button class="btn-primary" onclick="revisarPedido()">✓ Revisar y guardar</button>
   </div>
 </div>
 
@@ -602,6 +656,15 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-resumen-pedido">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title" id="resumen-title">📋 Resumen del pedido</div>
+    <div id="resumen-aviso"></div>
+    <div id="resumen-lineas" style="max-height:50vh;overflow-y:auto;"></div>
+    <div id="resumen-footer" class="modal-footer"></div>
+  </div>
+</div>
+
 
 <div class="modal-overlay" id="modal-resolver-stock">
   <div class="modal">
@@ -786,16 +849,30 @@ async function loadHome() {
     if (!personal.length) await Promise.all([loadPersonal(), loadFamilias(), loadProductos(), loadRegimenes()]);
   } catch(e) { /* ignore, se reintenta en init */ }
 
-  await Promise.all([renderHomePendientes(), renderHomeStats(), renderHomeAlertas()]);
+  const [sinPendientes, sinAlertas] = await Promise.all([renderHomePendientes(), renderHomeAlertas()]);
+  renderHomeStats();
+
+  // Estado "todo en orden": si no hay pedidos pendientes NI alertas de stock,
+  // se muestra un único bloque unificado en vez de dos alerts de éxito separados.
+  const okBanner = document.getElementById('home-todo-ok');
+  if (sinPendientes && sinAlertas) {
+    okBanner.style.display = 'block';
+    document.getElementById('home-pendientes-banner').innerHTML = '';
+    document.getElementById('home-alertas-section').style.display = 'none';
+  } else {
+    okBanner.style.display = 'none';
+    document.getElementById('home-alertas-section').style.display = '';
+  }
 }
 
+// Devuelve true si NO hay pedidos pendientes (para el estado "todo en orden")
 async function renderHomePendientes() {
   const c = document.getElementById('home-pendientes-banner');
   try {
     const pedidos = await db('pedidos', 'GET', null, '?estado=eq.pendiente');
     if (!pedidos.length) {
-      c.innerHTML = `<div class="alert alert-success" style="margin-bottom:0;">✅ No hay pedidos pendientes de recoger</div>`;
-      return;
+      c.innerHTML = '';
+      return true;
     }
     c.innerHTML = `<div class="home-banner">
       <div class="home-banner-row">
@@ -806,13 +883,24 @@ async function renderHomePendientes() {
         <button class="home-banner-btn" onclick="goSection('pedidos','pedido-manana')">Ver →</button>
       </div>
     </div>`;
+    return false;
   } catch(e) {
-    c.innerHTML = '';
+    c.innerHTML = '<div class="alert alert-warn" style="margin-bottom:0;">⚠️ Error al cargar pendientes.</div>';
+    return false;
   }
 }
 
-async function renderHomeStats() {
+function renderHomeStats() {
   const c = document.getElementById('home-stats');
+  c.innerHTML = `
+    <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+    <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+    <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>
+    <div class="stat-card skeleton-card"><div class="skeleton-line" style="width:60%;"></div><div class="skeleton-line" style="width:40%;height:20px;margin-top:6px;"></div></div>`;
+  loadHomeStatsData(c);
+}
+
+async function loadHomeStatsData(c) {
   try {
     const now = new Date();
     const desde = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -832,6 +920,7 @@ async function renderHomeStats() {
   }
 }
 
+// Devuelve true si NO hay alertas de stock pendientes (para el estado "todo en orden")
 async function renderHomeAlertas() {
   const c = document.getElementById('home-alertas');
   try {
@@ -850,8 +939,8 @@ async function renderHomeAlertas() {
     });
 
     if (!pendientes.length) {
-      c.innerHTML = '<div class="alert alert-success" style="margin-bottom:0;">✅ Sin alertas de stock pendientes</div>';
-      return;
+      c.innerHTML = '';
+      return true;
     }
     c.innerHTML = pendientes.slice(0, 4).map(prod => {
       const fam = familias.find(f => f.id === prod.familia_id);
@@ -864,8 +953,10 @@ async function renderHomeAlertas() {
         <span class="badge" style="background:rgba(255,69,58,0.1);color:var(--red);">Sin stock</span>
       </div>`;
     }).join('');
+    return false;
   } catch(e) {
     c.innerHTML = '<div class="alert alert-warn">⚠️ Error al cargar las alertas.</div>';
+    return false;
   }
 }
 
@@ -956,7 +1047,9 @@ function clearPedido() {
 }
 
 let guardandoPedido = false;
-async function guardarPedido() {
+
+// Paso 1: valida selección y abre el modal de resumen (o el aviso de pedido pendiente existente)
+async function revisarPedido() {
   if (guardandoPedido) return;
   const camarero = document.getElementById('pn-camarero').value;
   const bar = document.getElementById('pn-bar').value;
@@ -969,12 +1062,96 @@ async function guardarPedido() {
 
   if (!lineas.length) { alert('Añade al menos un producto con cantidad'); return; }
 
+  // ¿Hay ya un pedido pendiente para este bar?
+  let pedidoExistente = null;
+  try {
+    const pendientes = await db('pedidos', 'GET', null, `?estado=eq.pendiente&bar=eq.${encodeURIComponent(bar)}&order=created_at.desc&limit=1`);
+    if (pendientes.length) pedidoExistente = pendientes[0];
+  } catch(e) { /* si falla la comprobación, se sigue con el flujo normal de creación */ }
+
+  mostrarResumenPedido(lineas, camarero, bar, pedidoExistente);
+}
+
+// Pinta la lista de productos agrupada por familia dentro del modal de resumen
+function renderResumenLineas(lineas) {
+  const byFam = groupByFamily(lineas);
+  let totalUds = 0;
+  let html = '';
+  Object.entries(byFam).forEach(([fam, ls]) => {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 4px;">${fam}</div>`;
+    ls.forEach(l => {
+      const prod = productos.find(p => p.id === l.producto_id);
+      totalUds += l.cantidad_pedida;
+      html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:14px;">
+        <span>${prod?prod.nombre:'?'}</span>
+        <strong>${l.cantidad_pedida} ${prod?prod.unidad:'ud'}</strong>
+      </div>`;
+    });
+  });
+  return { html, totalUds };
+}
+
+// Paso 2: muestra el modal de resumen. Si ya hay un pedido pendiente para el bar,
+// ofrece añadir a ese pedido en vez de crear uno nuevo.
+function mostrarResumenPedido(lineas, camarero, bar, pedidoExistente) {
+  const { html, totalUds } = renderResumenLineas(lineas);
+  const numProductos = lineas.length;
+
+  document.getElementById('resumen-lineas').innerHTML = html;
+
+  const aviso = document.getElementById('resumen-aviso');
+  const footer = document.getElementById('resumen-footer');
+  const title = document.getElementById('resumen-title');
+
+  if (pedidoExistente) {
+    title.textContent = `📋 Ya hay un pedido pendiente para ${bar}`;
+    const fecha = new Date(pedidoExistente.created_at).toLocaleString('es-ES', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    aviso.innerHTML = `<div class="alert alert-warn">Ya existe un pedido pendiente de recoger para <strong>${bar}</strong> (creado ${fecha}). Puedes añadir estos ${numProductos} producto${numProductos===1?'':'s'} (${totalUds} ud) a ese pedido, o crear uno nuevo independiente.</div>`;
+    footer.innerHTML = '';
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-secondary';
+    btnCancel.textContent = 'Cancelar';
+    btnCancel.onclick = () => closeModal('modal-resumen-pedido');
+    const btnNuevo = document.createElement('button');
+    btnNuevo.className = 'btn-secondary';
+    btnNuevo.textContent = 'Crear pedido nuevo';
+    btnNuevo.onclick = () => guardarPedidoNuevo(lineas, camarero, bar);
+    const btnAdd = document.createElement('button');
+    btnAdd.className = 'btn-primary';
+    btnAdd.textContent = '+ Añadir al pendiente';
+    btnAdd.onclick = () => guardarPedidoExistente(lineas, pedidoExistente.id, bar);
+    footer.appendChild(btnCancel);
+    footer.appendChild(btnNuevo);
+    footer.appendChild(btnAdd);
+  } else {
+    title.textContent = '📋 Resumen del pedido';
+    aviso.innerHTML = `<div class="alert alert-info">${bar} · ${numProductos} producto${numProductos===1?'':'s'} · ${totalUds} ud en total</div>`;
+    footer.innerHTML = '';
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-secondary';
+    btnCancel.textContent = 'Volver';
+    btnCancel.onclick = () => closeModal('modal-resumen-pedido');
+    const btnConfirm = document.createElement('button');
+    btnConfirm.className = 'btn-primary';
+    btnConfirm.textContent = '✓ Confirmar y guardar';
+    btnConfirm.onclick = () => guardarPedidoNuevo(lineas, camarero, bar);
+    footer.appendChild(btnCancel);
+    footer.appendChild(btnConfirm);
+  }
+
+  openModal('modal-resumen-pedido');
+}
+
+// Crea un pedido nuevo con las líneas indicadas
+async function guardarPedidoNuevo(lineas, camarero, bar) {
+  if (guardandoPedido) return;
   guardandoPedido = true;
-  const btn = document.querySelector('[onclick="guardarPedido()"]');
-  if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+  const footer = document.getElementById('resumen-footer');
+  footer.querySelectorAll('button').forEach(b => b.disabled = true);
   try {
     const [ped] = await db('pedidos', 'POST', { bar, camarero_noche_id: camarero });
     await db('pedido_lineas', 'POST', lineas.map(l => ({ ...l, pedido_id: ped.id })));
+    closeModal('modal-resumen-pedido');
     alert(`✅ Pedido guardado para ${bar}`);
     clearPedido();
     document.getElementById('pn-camarero').value = '';
@@ -983,7 +1160,40 @@ async function guardarPedido() {
     alert('❌ Error al guardar el pedido. Comprueba tu conexión e inténtalo de nuevo.');
   } finally {
     guardandoPedido = false;
-    if (btn) { btn.textContent = '✓ Guardar pedido'; btn.disabled = false; }
+    footer.querySelectorAll('button').forEach(b => b.disabled = false);
+  }
+}
+
+// Añade las líneas a un pedido pendiente ya existente.
+// Si un producto ya estaba en el pedido (sin confirmar), se suma la cantidad
+// en lugar de crear una línea duplicada.
+async function guardarPedidoExistente(lineas, pedidoId, bar) {
+  if (guardandoPedido) return;
+  guardandoPedido = true;
+  const footer = document.getElementById('resumen-footer');
+  footer.querySelectorAll('button').forEach(b => b.disabled = true);
+  try {
+    const lineasActuales = await db('pedido_lineas', 'GET', null, `?pedido_id=eq.${pedidoId}`);
+    const nuevas = [];
+    for (const l of lineas) {
+      const existente = lineasActuales.find(le => le.producto_id === l.producto_id);
+      if (existente) {
+        await db('pedido_lineas', 'PATCH', { cantidad_pedida: existente.cantidad_pedida + l.cantidad_pedida }, `?id=eq.${existente.id}`);
+      } else {
+        nuevas.push({ ...l, pedido_id: pedidoId });
+      }
+    }
+    if (nuevas.length) await db('pedido_lineas', 'POST', nuevas);
+    closeModal('modal-resumen-pedido');
+    alert(`✅ Productos añadidos al pedido pendiente de ${bar}`);
+    clearPedido();
+    document.getElementById('pn-camarero').value = '';
+    document.getElementById('pn-bar').value = 'Bar Piscina';
+  } catch(e) {
+    alert('❌ Error al añadir al pedido. Comprueba tu conexión e inténtalo de nuevo.');
+  } finally {
+    guardandoPedido = false;
+    footer.querySelectorAll('button').forEach(b => b.disabled = false);
   }
 }
 
