@@ -34,7 +34,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
-body { font-family: var(--sf); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.45; padding-bottom: calc(64px + env(safe-area-inset-bottom)); -webkit-font-smoothing: antialiased; }
+body { font-family: var(--sf); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.45; padding-bottom: calc(64px + env(safe-area-inset-bottom)); -webkit-font-smoothing: antialiased; touch-action: manipulation; }
 a { color: var(--accent); text-decoration: none; }
 
 /* TABS internas (usadas dentro de #section-pedidos) */
@@ -68,7 +68,7 @@ a { color: var(--accent); text-decoration: none; }
 .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; letter-spacing: -0.2px; }
 
 /* BUTTONS */
-button { cursor: pointer; font-family: var(--sf); font-size: 14px; border: none; border-radius: var(--radius-sm); padding: 11px 20px; transition: all .15s; font-weight: 600; -webkit-appearance: none; min-height: 40px; }
+button { cursor: pointer; font-family: var(--sf); font-size: 14px; border: none; border-radius: var(--radius-sm); padding: 11px 20px; transition: all .15s; font-weight: 600; -webkit-appearance: none; min-height: 40px; touch-action: manipulation; }
 button:active { transform: scale(0.98); }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { background: var(--accent2); }
@@ -119,11 +119,12 @@ tr:hover td { background: rgba(0,0,0,0.015); }
 .confirm-row.diff { border-color: rgba(255,159,10,0.35); background: rgba(255,159,10,0.05); }
 
 /* STAT CARDS */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
-.stat-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; }
-.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .03em; }
-.stat-value { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
-.stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.stat-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 8px; text-align: center; }
+.stat-label { font-size: 10px; color: var(--text2); font-weight: 500; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-value { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.stat-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+@media(max-width:380px){ .stat-value { font-size: 17px; } .stat-label { font-size: 9px; } }
 
 /* FAMILY SECTION */
 .family-section { margin-bottom: 20px; }
@@ -327,12 +328,6 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     </div>
   </div>
 
-  <div class="home-section">
-    <div class="home-section-label">Equipo</div>
-    <div class="home-list-card" id="home-personal">
-      <div class="loading"><div class="spinner"></div> Cargando...</div>
-    </div>
-  </div>
 </div>
 <!-- /section-home -->
 
@@ -791,24 +786,7 @@ async function loadHome() {
     if (!personal.length) await Promise.all([loadPersonal(), loadFamilias(), loadProductos(), loadRegimenes()]);
   } catch(e) { /* ignore, se reintenta en init */ }
 
-  renderHomePersonal();
   await Promise.all([renderHomePendientes(), renderHomeStats(), renderHomeAlertas()]);
-}
-
-function renderHomePersonal() {
-  const c = document.getElementById('home-personal');
-  if (!personal.length) { c.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><p>No hay personal registrado</p></div>'; return; }
-  const iconClasses = ['icon-blue','icon-purple','icon-green','icon-amber'];
-  c.innerHTML = personal.slice(0, 6).map((p, i) => {
-    const initials = p.nombre.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
-    return `<div class="home-list-row" style="cursor:default;" onclick="">
-      <div class="home-list-icon ${iconClasses[i % iconClasses.length]}" style="font-size:13px;font-weight:700;">${initials}</div>
-      <div class="home-list-left">
-        <div class="home-list-name">${p.nombre}</div>
-        <div class="home-list-meta">${p.cargo || 'Camarero'}</div>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 async function renderHomePendientes() {
