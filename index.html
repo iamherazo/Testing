@@ -425,7 +425,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   </div>
 
   <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
-    <button class="btn-secondary" onclick="clearPedido()">Limpiar</button>
+    <button class="btn-secondary" onclick="if(confirm('¿Limpiar todas las cantidades y el camarero seleccionado?')) clearPedido()">Limpiar</button>
     <button class="btn-primary" onclick="revisarPedido()">✓ Revisar y guardar</button>
   </div>
 </div>
@@ -603,6 +603,15 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
       <label>Nombre</label>
       <input type="text" id="new-personal-nombre" placeholder="Nombre completo o iniciales">
     </div>
+    <div class="form-group">
+      <label>Cargo</label>
+      <select id="new-personal-cargo">
+        <option value="Camarero">Camarero</option>
+        <option value="Tercer encargado">Tercer encargado</option>
+        <option value="Segundo encargado">Segundo encargado</option>
+        <option value="Manager">Manager</option>
+      </select>
+    </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-add-personal')">Cancelar</button>
       <button class="btn-primary" onclick="addPersonal()">Guardar</button>
@@ -640,6 +649,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     <div class="form-group">
       <label>Nombre</label>
       <input type="text" id="new-familia-nombre" placeholder="Nombre de la familia">
+    </div>
+    <div class="form-group">
+      <label>Régimen</label>
+      <select id="new-familia-regimen"></select>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" onclick="closeModal('modal-add-familia')">Cancelar</button>
@@ -729,6 +742,11 @@ async function db(table, method='GET', body=null, query='') {
   if (!r.ok) { const e = await r.text(); throw new Error(e); }
   if (method === 'DELETE' || r.status === 204) return null;
   return r.json();
+}
+
+// ─── Escape HTML para prevenir XSS ─────────────────────────────
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ─── State ─────────────────────────────────────────────────────
@@ -842,7 +860,7 @@ function showCierreTab(tab, el) {
 
 function initCierre() {
   if (!checklistTareas.length) loadChecklistTareas();
-  if (!document.getElementById('caja-container').innerHTML) renderCaja();
+  renderCaja();
 }
 
 // ─── Inicio (Home dashboard) ────────────────────────────────────
@@ -952,8 +970,8 @@ async function renderHomeAlertas() {
       return `<div class="home-alert-card">
         <div class="home-alert-icon">⚠️</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:600;">${prod.nombre}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${fam ? fam.nombre : 'Sin familia'}</div>
+          <div style="font-size:14px;font-weight:600;">${esc(prod.nombre)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${fam ? esc(fam.nombre) : 'Sin familia'}</div>
         </div>
         <span class="badge" style="background:rgba(255,69,58,0.1);color:var(--red);">Sin stock</span>
       </div>`;
@@ -971,7 +989,7 @@ function populateCamareroSelects() {
   ['pn-camarero','pm-camarero'].forEach(id => {
     const s = document.getElementById(id);
     s.innerHTML = '<option value="">— Selecciona camarero —</option>' +
-      personal.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+      personal.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
   });
 }
 
@@ -1001,7 +1019,7 @@ function renderPedidoNoche() {
     const rId = 'r_' + regId;
     html += '<div style="margin-bottom:16px;">';
     html += '<div class="reg-header" id="rh_' + regId + '" onclick="toggleReg(\'' + regId + '\')">';
-    html += '<span class="reg-header-title">📌 ' + regData.nombre + '</span>';
+    html += '<span class="reg-header-title">📌 ' + esc(regData.nombre) + '</span>';
     html += '<span class="reg-arrow">▾</span>';
     html += '</div>';
     html += '<div class="reg-body" id="rb_' + regId + '">';
@@ -1010,7 +1028,7 @@ function renderPedidoNoche() {
       const fId = 'f_' + famNombre.replace(/[^a-z0-9]/gi, '_');
       html += '<div style="margin-bottom:6px;">';
       html += '<div class="fam-header" id="fh_' + fId + '" onclick="toggleFam(\'' + fId + '\')">';
-      html += '<span class="fam-header-title">' + famNombre + '</span>';
+      html += '<span class="fam-header-title">' + esc(famNombre) + '</span>';
       html += '<div style="display:flex;align-items:center;gap:6px;">';
       html += '<span class="fam-badge" id="fb_' + fId + '"></span>';
       html += '<span class="fam-arrow">▶</span>';
@@ -1018,10 +1036,10 @@ function renderPedidoNoche() {
       html += '<div class="fam-body" id="fbd_' + fId + '">';
       prods.forEach(function(p) {
         html += '<div class="product-row">';
-        html += '<div><div class="product-name">' + p.nombre + '</div><div class="product-family">' + p.unidad + '</div></div>';
+        html += '<div><div class="product-name">' + esc(p.nombre) + '</div><div class="product-family">' + esc(p.unidad) + '</div></div>';
         html += '<div class="qty-ctrl">';
         html += '<button class="btn-minus" onclick="changeQty(\'' + p.id + '\',-1)">−</button>';
-        html += '<input type="number" id="qty-' + p.id + '" value="" placeholder="0" min="0" max="999" inputmode="numeric" onchange="validateQty(\'' + p.id + '\');updateBadges();">';
+        html += '<input type="number" id="qty-' + p.id + '" value="" placeholder="0" min="0" max="999" inputmode="numeric" oninput="updateBadges()" onchange="validateQty(\'' + p.id + '\');updateBadges();">';
         html += '<button class="btn-plus" onclick="changeQty(\'' + p.id + '\',1)">+</button>';
         html += '</div></div>';
       });
@@ -1035,8 +1053,8 @@ function renderPedidoNoche() {
 
 function changeQty(id, delta) {
   const inp = document.getElementById(`qty-${id}`);
-  const v = Math.max(0, parseInt(inp.value||0) + delta);
-  inp.value = v;
+  const v = Math.min(999, Math.max(0, parseInt(inp.value||0) + delta));
+  inp.value = v > 0 ? v : '';
   updateBadges();
 }
 function validateQty(id) {
@@ -1048,6 +1066,7 @@ function removeFromList(id) {
 }
 function clearPedido() {
   productos.forEach(p => { const el = document.getElementById(`qty-${p.id}`); if(el) el.value = ''; });
+  document.getElementById('pn-camarero').value = '';
   updateBadges();
 }
 
@@ -1064,6 +1083,7 @@ function resetPnBar() {
 }
 
 let guardandoPedido = false;
+let adminSaving = false;
 
 // Paso 1: valida selección y abre el modal de resumen (o el aviso de pedido pendiente existente)
 async function revisarPedido() {
@@ -1095,13 +1115,13 @@ function renderResumenLineas(lineas) {
   let totalUds = 0;
   let html = '';
   Object.entries(byFam).forEach(([fam, ls]) => {
-    html += `<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 4px;">${fam}</div>`;
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 4px;">${esc(fam)}</div>`;
     ls.forEach(l => {
       const prod = productos.find(p => p.id === l.producto_id);
       totalUds += l.cantidad_pedida;
       html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:14px;">
-        <span>${prod?prod.nombre:'?'}</span>
-        <strong>${l.cantidad_pedida} ${prod?prod.unidad:'ud'}</strong>
+        <span>${prod?esc(prod.nombre):'?'}</span>
+        <strong>${l.cantidad_pedida} ${prod?esc(prod.unidad):'ud'}</strong>
       </div>`;
     });
   });
@@ -1123,7 +1143,7 @@ function mostrarResumenPedido(lineas, camarero, bar, pedidoExistente) {
   if (pedidoExistente) {
     title.textContent = `📋 Ya hay un pedido pendiente para ${bar}`;
     const fecha = new Date(pedidoExistente.created_at).toLocaleString('es-ES', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    aviso.innerHTML = `<div class="alert alert-warn">Ya existe un pedido pendiente de recoger para <strong>${bar}</strong> (creado ${fecha}). Puedes añadir estos ${numProductos} producto${numProductos===1?'':'s'} (${totalUds} ud) a ese pedido, o crear uno nuevo independiente.</div>`;
+    aviso.innerHTML = `<div class="alert alert-warn">Ya existe un pedido pendiente de recoger para <strong>${esc(bar)}</strong> (creado ${esc(fecha)}). Puedes añadir estos ${numProductos} producto${numProductos===1?'':'s'} (${totalUds} ud) a ese pedido, o crear uno nuevo independiente.</div>`;
     footer.innerHTML = '';
     const btnCancel = document.createElement('button');
     btnCancel.className = 'btn-secondary';
@@ -1142,7 +1162,7 @@ function mostrarResumenPedido(lineas, camarero, bar, pedidoExistente) {
     footer.appendChild(btnAdd);
   } else {
     title.textContent = '📋 Resumen del pedido';
-    aviso.innerHTML = `<div class="alert alert-info">${bar} · ${numProductos} producto${numProductos===1?'':'s'} · ${totalUds} ud en total</div>`;
+    aviso.innerHTML = `<div class="alert alert-info">${esc(bar)} · ${numProductos} producto${numProductos===1?'':'s'} · ${totalUds} ud en total</div>`;
     footer.innerHTML = '';
     const btnCancel = document.createElement('button');
     btnCancel.className = 'btn-secondary';
@@ -1232,19 +1252,19 @@ async function loadPedidosPendientes() {
       html += `<div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div>
-            <span class="badge badge-${ped.bar==='Bar Piscina'?'piscina':'lobby'}">${ped.bar}</span>
-            <span style="font-size:13px;color:var(--text2);margin-left:10px;">${fecha} · ${cam?cam.nombre:'—'}</span>
+            <span class="badge badge-${ped.bar==='Bar Piscina'?'piscina':'lobby'}">${esc(ped.bar)}</span>
+            <span style="font-size:13px;color:var(--text2);margin-left:10px;">${esc(fecha)} · ${cam?esc(cam.nombre):'—'}</span>
           </div>
           <span style="font-size:13px;color:var(--text2)">${lineas.length} productos</span>
         </div>`;
       const byFam = groupByFamily(lineas);
       Object.entries(byFam).forEach(([fam, ls]) => {
-        html += `<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:6px 0 4px;">${fam}</div>`;
+        html += `<div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:6px 0 4px;">${esc(fam)}</div>`;
         ls.forEach(l => {
           const prod = productos.find(p => p.id === l.producto_id);
           html += `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:14px;">
-            <span>${prod?prod.nombre:'?'}</span>
-            <strong>${l.cantidad_pedida} ${prod?prod.unidad:'ud'}</strong>
+            <span>${prod?esc(prod.nombre):'?'}</span>
+            <strong>${l.cantidad_pedida} ${prod?esc(prod.unidad):'ud'}</strong>
           </div>`;
         });
       });
@@ -1280,7 +1300,7 @@ async function openConfirmar(pedidoId) {
     const prod = productos.find(p => p.id === l.producto_id);
     html += `<div class="confirm-row" id="crow-${l.id}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-weight:600;font-size:14px;">${prod?prod.nombre:'?'}</div>
+        <div style="font-weight:600;font-size:14px;">${prod?esc(prod.nombre):'?'}</div>
         <div style="font-size:13px;color:var(--text2)">Pedido: <strong>${l.cantidad_pedida}</strong></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;">
@@ -1361,7 +1381,7 @@ function getDateRange() {
   const now = new Date();
   let desde, hasta = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
   if (p === 'hoy') desde = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  else if (p === 'semana') { const d = new Date(now); d.setDate(d.getDate() - d.getDay()); desde = new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  else if (p === 'semana') { const d = new Date(now); const dow = d.getDay() || 7; d.setDate(d.getDate() - dow + 1); desde = new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
   else if (p === 'mes') desde = new Date(now.getFullYear(), now.getMonth(), 1);
   else {
     const desdeVal = document.getElementById('h-desde').value;
@@ -1440,8 +1460,8 @@ async function renderHistorialList(pedidos) {
         <div style="font-size:13px;color:var(--text2)">${fecha}</div>
       </div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">
-        📋 Noche: <strong>${cam?cam.nombre:'—'}</strong>
-        ${camM ? ` &nbsp;🌅 Mañana: <strong>${camM.nombre}</strong>` : ''}
+        📋 Noche: <strong>${cam?esc(cam.nombre):'—'}</strong>
+        ${camM ? ` &nbsp;🌅 Mañana: <strong>${esc(camM.nombre)}</strong>` : ''}
       </div>
       <div class="tbl-wrap"><table>
         <thead><tr><th>Producto</th><th>Pedido</th><th>Llevado</th><th>Diferencia</th></tr></thead>
@@ -1450,10 +1470,10 @@ async function renderHistorialList(pedidos) {
       const prod = productos.find(p => p.id === l.producto_id);
       const diff = l.cantidad_llevada !== null ? l.cantidad_pedida - l.cantidad_llevada : null;
       html += `<tr>
-        <td>${prod?prod.nombre:'?'}</td>
+        <td>${prod?esc(prod.nombre):'?'}</td>
         <td>${l.cantidad_pedida}</td>
         <td>${l.cantidad_llevada !== null ? l.cantidad_llevada : '—'}</td>
-        <td>${diff !== null ? (diff === 0 ? '<span style="color:var(--green)">✓</span>' : `<span style="color:var(--amber)">-${diff} <small style="color:var(--text3)">${l.motivo_diferencia||''}</small></span>`) : '—'}</td>
+        <td>${diff !== null ? (diff === 0 ? '<span style="color:var(--green)">✓</span>' : `<span style="color:var(--amber)">-${diff} <small style="color:var(--text3)">${esc(l.motivo_diferencia||'')}</small></span>`) : '—'}</td>
       </tr>`;
     });
     html += `</tbody></table></div></div>`;
@@ -1463,30 +1483,38 @@ async function renderHistorialList(pedidos) {
 
 // ─── EXPORT EXCEL ──────────────────────────────────────────────
 async function exportExcel() {
-  const bar = document.getElementById('h-bar').value;
-  const { desde, hasta } = getDateRange();
-  let q = `?created_at=gte.${desde}&created_at=lte.${hasta}&order=created_at.desc`;
-  if (bar) q += `&bar=eq.${encodeURIComponent(bar)}`;
-  const pedidos = await db('pedidos', 'GET', null, q);
-  const rows = [['Fecha','Bar','Estado','Camarero Noche','Camarero Mañana','Régimen','Producto','Familia','Cantidad Pedida','Cantidad Llevada','Diferencia','Motivo']];
-  for (const ped of pedidos) {
-    const lineas = await db('pedido_lineas', 'GET', null, `?pedido_id=eq.${ped.id}`);
-    const cn = personal.find(p => p.id === ped.camarero_noche_id);
-    const cm = personal.find(p => p.id === ped.camarero_manana_id);
-    const fecha = new Date(ped.created_at).toLocaleString('es-ES');
-    lineas.forEach(l => {
-      const prod = productos.find(p => p.id === l.producto_id);
-      const fam = prod ? familias.find(f => f.id === prod.familia_id) : null;
-      const diff = l.cantidad_llevada !== null ? l.cantidad_pedida - l.cantidad_llevada : '';
-      const reg2 = fam ? regimenes.find(r => r.id === fam.regimen_id) : null;
-      rows.push([fecha, ped.bar, ped.estado, cn?cn.nombre:'', cm?cm.nombre:'', reg2?reg2.nombre:'', prod?prod.nombre:'?', fam?fam.nombre:'', l.cantidad_pedida, l.cantidad_llevada ?? '', diff, l.motivo_diferencia||'']);
-    });
+  const btn = document.querySelector('[onclick="exportExcel()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Exportando...'; }
+  try {
+    const bar = document.getElementById('h-bar').value;
+    const { desde, hasta } = getDateRange();
+    let q = `?created_at=gte.${desde}&created_at=lte.${hasta}&order=created_at.desc`;
+    if (bar) q += `&bar=eq.${encodeURIComponent(bar)}`;
+    const pedidos = await db('pedidos', 'GET', null, q);
+    const rows = [['Fecha','Bar','Estado','Camarero Noche','Camarero Mañana','Régimen','Producto','Familia','Cantidad Pedida','Cantidad Llevada','Diferencia','Motivo']];
+    for (const ped of pedidos) {
+      const lineas = await db('pedido_lineas', 'GET', null, `?pedido_id=eq.${ped.id}`);
+      const cn = personal.find(p => p.id === ped.camarero_noche_id);
+      const cm = personal.find(p => p.id === ped.camarero_manana_id);
+      const fecha = new Date(ped.created_at).toLocaleString('es-ES');
+      lineas.forEach(l => {
+        const prod = productos.find(p => p.id === l.producto_id);
+        const fam = prod ? familias.find(f => f.id === prod.familia_id) : null;
+        const diff = l.cantidad_llevada !== null ? l.cantidad_pedida - l.cantidad_llevada : '';
+        const reg2 = fam ? regimenes.find(r => r.id === fam.regimen_id) : null;
+        rows.push([fecha, ped.bar, ped.estado, cn?cn.nombre:'', cm?cm.nombre:'', reg2?reg2.nombre:'', prod?prod.nombre:'?', fam?fam.nombre:'', l.cantidad_pedida, l.cantidad_llevada ?? '', diff, l.motivo_diferencia||'']);
+      });
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = rows[0].map(() => ({wch:20}));
+    XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+    XLSX.writeFile(wb, `inventario_${new Date().toISOString().slice(0,10)}.xlsx`);
+  } catch(e) {
+    alert('❌ Error al exportar. Comprueba tu conexión e inténtalo de nuevo.');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Exportar Excel'; }
   }
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = rows[0].map(() => ({wch:20}));
-  XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
-  XLSX.writeFile(wb, `inventario_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ─── ADMIN ─────────────────────────────────────────────────────
@@ -1497,6 +1525,7 @@ async function loadAdmin() {
   renderFamiliasAdmin();
   renderRegimenesAdmin();
   populateFamiliaSelect();
+  populateRegimenSelectsModal();
 }
 
 function renderPersonalAdmin() {
@@ -1505,8 +1534,8 @@ function renderPersonalAdmin() {
   c.innerHTML = `<div class="card"><table>
     <thead><tr><th>Nombre</th><th>Cargo</th><th style="width:120px;text-align:right">Acciones</th></tr></thead>
     <tbody>${personal.map(p => `<tr>
-      <td>${p.nombre}</td>
-      <td style="color:var(--text2);font-size:13px;">${p.cargo||'Camarero'}</td>
+      <td>${esc(p.nombre)}</td>
+      <td style="color:var(--text2);font-size:13px;">${esc(p.cargo||'Camarero')}</td>
       <td style="text-align:right">
         <button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditPersonal('${p.id}')">✏️</button>
         <button class="btn-danger btn-sm" onclick="deletePersonal('${p.id}')">✕</button>
@@ -1535,10 +1564,10 @@ function renderProductosAdmin() {
   let html = '';
   Object.entries(byReg).forEach(([regId, regData]) => {
     if (!Object.keys(regData.familias).length) return;
-    html += `<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);padding:10px 0 4px;margin-top:8px;">📌 ${regData.nombre}</div>`;
+    html += `<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);padding:10px 0 4px;margin-top:8px;">📌 ${esc(regData.nombre)}</div>`;
     Object.entries(regData.familias).forEach(([fam, prods]) => {
-      html += `<div class="card" style="margin-bottom:8px;"><div class="family-header">${fam}</div><table>
-        <tbody>${prods.map(p => `<tr><td>${p.nombre}</td><td style="color:var(--text3);font-size:13px;">${p.unidad}</td><td style="text-align:right"><button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditProducto('${p.id}')">✏️</button><button class="btn-danger btn-sm" onclick="deleteProducto('${p.id}')">✕</button></td></tr>`).join('')}
+      html += `<div class="card" style="margin-bottom:8px;"><div class="family-header">${esc(fam)}</div><table>
+        <tbody>${prods.map(p => `<tr><td>${esc(p.nombre)}</td><td style="color:var(--text3);font-size:13px;">${esc(p.unidad)}</td><td style="text-align:right"><button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditProducto('${p.id}')">✏️</button><button class="btn-danger btn-sm" onclick="deleteProducto('${p.id}')">✕</button></td></tr>`).join('')}
         </tbody></table></div>`;
     });
   });
@@ -1553,8 +1582,8 @@ function renderFamiliasAdmin() {
     <tbody>${familias.map(f => {
       const reg = regimenes.find(r => r.id === f.regimen_id);
       return `<tr>
-        <td>${f.nombre}</td>
-        <td style="color:var(--text2);font-size:13px;">${reg?reg.nombre:'—'}</td>
+        <td>${esc(f.nombre)}</td>
+        <td style="color:var(--text2);font-size:13px;">${reg?esc(reg.nombre):'—'}</td>
         <td style="text-align:right">
           <button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditFamilia('${f.id}')">✏️</button>
           <button class="btn-danger btn-sm" onclick="deleteFamilia('${f.id}')">✕</button>
@@ -1575,43 +1604,58 @@ function populateFamiliaSelect() {
     grouped[key].push(f);
   });
   s.innerHTML = Object.entries(grouped).map(([reg, fams]) =>
-    `<optgroup label="${reg}">${fams.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('')}</optgroup>`
+    `<optgroup label="${esc(reg)}">${fams.map(f => `<option value="${f.id}">${esc(f.nombre)}</option>`).join('')}</optgroup>`
   ).join('');
 }
 
 async function addPersonal() {
+  if (adminSaving) return; adminSaving = true;
   const n = document.getElementById('new-personal-nombre').value.trim();
-  if (!n) { alert('Escribe un nombre'); return; }
+  const cargo = document.getElementById('new-personal-cargo').value;
+  if (!n) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
-    await db('personal', 'POST', { nombre: n });
+    await db('personal', 'POST', { nombre: n, cargo });
     document.getElementById('new-personal-nombre').value = '';
+    document.getElementById('new-personal-cargo').value = 'Camarero';
     closeModal('modal-add-personal');
     await loadPersonal(); renderPersonalAdmin(); populateCamareroSelects();
   } catch(e) { alert('❌ Error al añadir el camarero.'); }
+  finally { adminSaving = false; }
 }
 
 async function addProducto() {
+  if (adminSaving) return; adminSaving = true;
   const n = document.getElementById('new-prod-nombre').value.trim();
   const fam = document.getElementById('new-prod-familia').value;
   const uni = document.getElementById('new-prod-unidad').value.trim() || 'ud';
-  if (!n) { alert('Escribe un nombre'); return; }
+  if (!n) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
     await db('productos', 'POST', { nombre: n, familia_id: fam || null, unidad: uni });
     document.getElementById('new-prod-nombre').value = '';
     closeModal('modal-add-producto');
     await loadProductos(); renderProductosAdmin(); renderPedidoNoche();
   } catch(e) { alert('❌ Error al añadir el producto.'); }
+  finally { adminSaving = false; }
 }
 
 async function addFamilia() {
+  if (adminSaving) return; adminSaving = true;
   const n = document.getElementById('new-familia-nombre').value.trim();
-  if (!n) { alert('Escribe un nombre'); return; }
+  const regimen_id = document.getElementById('new-familia-regimen').value || null;
+  if (!n) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
-    await db('familias', 'POST', { nombre: n, orden: familias.length + 1 });
+    await db('familias', 'POST', { nombre: n, regimen_id, orden: familias.length + 1 });
     document.getElementById('new-familia-nombre').value = '';
     closeModal('modal-add-familia');
-    await loadFamilias(); renderFamiliasAdmin(); populateFamiliaSelect(); renderPedidoNoche();
+    await loadFamilias(); renderFamiliasAdmin(); populateFamiliaSelect(); populateRegimenSelectsModal(); renderPedidoNoche();
   } catch(e) { alert('❌ Error al añadir la familia.'); }
+  finally { adminSaving = false; }
+}
+
+function populateRegimenSelectsModal() {
+  const s = document.getElementById('new-familia-regimen');
+  if (!s) return;
+  s.innerHTML = regimenes.map(r => `<option value="${r.id}">${esc(r.nombre)}</option>`).join('');
 }
 
 async function deletePersonal(id) {
@@ -1642,7 +1686,27 @@ async function deleteFamilia(id) {
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => {
+    if (e.target !== m) return;
+    // El modal de resumen de pedido requiere confirmación para no perder el trabajo
+    if (m.id === 'modal-resumen-pedido') {
+      if (confirm('¿Cerrar el resumen sin guardar el pedido?')) m.classList.remove('open');
+    } else {
+      m.classList.remove('open');
+    }
+  });
+});
+
+// Tecla Enter en inputs de modales dispara el botón primario del modal
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const openModal = document.querySelector('.modal-overlay.open');
+  if (!openModal) return;
+  // Solo si el foco está en un input de texto o select (no en textarea ni botones)
+  const tag = document.activeElement?.tagName;
+  if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  const btn = openModal.querySelector('.modal-footer .btn-primary');
+  if (btn && !btn.disabled) btn.click();
 });
 
 
@@ -1665,10 +1729,10 @@ async function renderSinStockAlerts(prodSinStock, container) {
   pendientes.forEach(([prodId, info]) => {
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
       <div>
-        <div style="font-weight:600;font-size:14px;">${info.nombre}</div>
+        <div style="font-weight:600;font-size:14px;">${esc(info.nombre)}</div>
         <div style="font-size:12px;color:var(--text3);">${info.total} ud sin entregar</div>
       </div>
-      <button class="btn-success btn-sm" onclick="openResolverAlerta('${prodId}','${info.nombre}')">✓ Resolver</button>
+      <button class="btn-success btn-sm" onclick="openResolverAlerta('${prodId}','${esc(info.nombre)}')">✓ Resolver</button>
     </div>`;
   });
   html += '</div>';
@@ -1681,7 +1745,7 @@ function openResolverAlerta(prodId, nombre) {
   resolverProdId = prodId;
   document.getElementById('resolver-nombre').textContent = nombre;
   const s = document.getElementById('resolver-camarero');
-  s.innerHTML = '<option value="">— Selecciona —</option>' + personal.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+  s.innerHTML = '<option value="">— Selecciona —</option>' + personal.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
   openModal('modal-resolver-stock');
 }
 
@@ -1712,15 +1776,17 @@ function openEditPersonal(id) {
   openModal('modal-edit-personal');
 }
 async function savePersonal() {
+  if (adminSaving) return; adminSaving = true;
   const id = document.getElementById('edit-personal-id').value;
   const nombre = document.getElementById('edit-personal-nombre').value.trim();
   const cargo = document.getElementById('edit-personal-cargo').value;
-  if (!nombre) { alert('Escribe un nombre'); return; }
+  if (!nombre) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
     await db('personal', 'PATCH', { nombre, cargo }, `?id=eq.${id}`);
     closeModal('modal-edit-personal');
     await loadPersonal(); renderPersonalAdmin(); populateCamareroSelects();
   } catch(e) { alert('❌ Error al guardar. Inténtalo de nuevo.'); }
+  finally { adminSaving = false; }
 }
 
 // ─── EDIT PRODUCTO ──────────────────────────────────────────────
@@ -1739,21 +1805,23 @@ function openEditProducto(id) {
     grouped[key].push(f);
   });
   s.innerHTML = Object.entries(grouped).map(([reg, fams]) =>
-    `<optgroup label="${reg}">${fams.map(f => `<option value="${f.id}" ${f.id === p.familia_id ? 'selected' : ''}>${f.nombre}</option>`).join('')}</optgroup>`
+    `<optgroup label="${esc(reg)}">${fams.map(f => `<option value="${f.id}" ${f.id === p.familia_id ? 'selected' : ''}>${esc(f.nombre)}</option>`).join('')}</optgroup>`
   ).join('');
   openModal('modal-edit-producto');
 }
 async function saveProducto() {
+  if (adminSaving) return; adminSaving = true;
   const id = document.getElementById('edit-prod-id').value;
   const nombre = document.getElementById('edit-prod-nombre').value.trim();
   const familia_id = document.getElementById('edit-prod-familia').value;
   const unidad = document.getElementById('edit-prod-unidad').value.trim() || 'ud';
-  if (!nombre) { alert('Escribe un nombre'); return; }
+  if (!nombre) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
     await db('productos', 'PATCH', { nombre, familia_id, unidad }, `?id=eq.${id}`);
     closeModal('modal-edit-producto');
     await loadProductos(); renderProductosAdmin(); renderPedidoNoche();
   } catch(e) { alert('❌ Error al guardar. Inténtalo de nuevo.'); }
+  finally { adminSaving = false; }
 }
 
 // ─── EDIT FAMILIA ───────────────────────────────────────────────
@@ -1763,19 +1831,21 @@ function openEditFamilia(id) {
   document.getElementById('edit-familia-id').value = f.id;
   document.getElementById('edit-familia-nombre').value = f.nombre;
   const s = document.getElementById('edit-familia-regimen');
-  s.innerHTML = regimenes.map(r => `<option value="${r.id}" ${r.id === f.regimen_id ? 'selected' : ''}>${r.nombre}</option>`).join('');
+  s.innerHTML = regimenes.map(r => `<option value="${r.id}" ${r.id === f.regimen_id ? 'selected' : ''}>${esc(r.nombre)}</option>`).join('');
   openModal('modal-edit-familia');
 }
 async function saveFamilia() {
+  if (adminSaving) return; adminSaving = true;
   const id = document.getElementById('edit-familia-id').value;
   const nombre = document.getElementById('edit-familia-nombre').value.trim();
   const regimen_id = document.getElementById('edit-familia-regimen').value;
-  if (!nombre) { alert('Escribe un nombre'); return; }
+  if (!nombre) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
     await db('familias', 'PATCH', { nombre, regimen_id }, `?id=eq.${id}`);
     closeModal('modal-edit-familia');
-    await loadFamilias(); renderFamiliasAdmin(); populateFamiliaSelect(); renderPedidoNoche();
+    await loadFamilias(); renderFamiliasAdmin(); populateFamiliaSelect(); populateRegimenSelectsModal(); renderPedidoNoche();
   } catch(e) { alert('❌ Error al guardar. Inténtalo de nuevo.'); }
+  finally { adminSaving = false; }
 }
 
 // ─── REGIMENES ADMIN ────────────────────────────────────────────
@@ -1785,7 +1855,7 @@ function renderRegimenesAdmin() {
   c.innerHTML = `<div class="card"><table>
     <thead><tr><th>Nombre</th><th style="width:120px;text-align:right">Acciones</th></tr></thead>
     <tbody>${regimenes.map(r => `<tr>
-      <td>${r.nombre}</td>
+      <td>${esc(r.nombre)}</td>
       <td style="text-align:right">
         <button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditRegimen('${r.id}')">✏️</button>
         <button class="btn-danger btn-sm" onclick="deleteRegimen('${r.id}')">✕</button>
@@ -1801,9 +1871,10 @@ function openEditRegimen(id) {
   openModal('modal-regimen');
 }
 async function saveRegimen() {
+  if (adminSaving) return; adminSaving = true;
   const id = document.getElementById('edit-regimen-id').value;
   const nombre = document.getElementById('edit-regimen-nombre').value.trim();
-  if (!nombre) { alert('Escribe un nombre'); return; }
+  if (!nombre) { adminSaving = false; alert('Escribe un nombre'); return; }
   try {
     if (id) {
       await db('regimenes', 'PATCH', { nombre }, `?id=eq.${id}`);
@@ -1813,8 +1884,9 @@ async function saveRegimen() {
     document.getElementById('edit-regimen-nombre').value = '';
     document.getElementById('edit-regimen-id').value = '';
     closeModal('modal-regimen');
-    await loadRegimenes(); renderRegimenesAdmin(); renderPedidoNoche();
+    await loadRegimenes(); renderRegimenesAdmin(); populateRegimenSelectsModal(); renderPedidoNoche();
   } catch(e) { alert('❌ Error al guardar. Inténtalo de nuevo.'); }
+  finally { adminSaving = false; }
 }
 async function deleteRegimen(id) {
   if (!confirm('¿Eliminar este régimen? Las familias asociadas quedarán sin régimen.')) return;
@@ -1861,7 +1933,7 @@ async function loadChecklistTareas() {
 
 function setChkBar(bar, el) {
   chkBar = bar;
-  document.querySelectorAll('.chk-bar-pill').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#cierre-checklist .chk-bar-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   renderChecklist();
 }
@@ -1906,7 +1978,7 @@ function renderChecklist() {
     const total = items.length;
     const isOpen = chkOpenSection === tipo;
     const isComplete = done === total;
-    html += `<div class="chk-section">
+    html += `<div class="chk-section" data-tipo="${tipo}">
       <div class="chk-section-header" onclick="toggleChkSection('${tipo}')">
         <div class="chk-section-icon ${iconClass}">${emoji}</div>
         <div class="chk-section-info">
@@ -1920,9 +1992,9 @@ function renderChecklist() {
     items.forEach(t => {
       const checked = !!checklistState[t.id];
       html += `<label class="chk-item">
-        <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${t.id}', this)">
+        <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${esc(t.id)}', this)">
         <span class="chk-checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-        <span class="chk-item-label">${t.descripcion}</span>
+        <span class="chk-item-label">${esc(t.descripcion)}</span>
       </label>`;
     });
     html += `</div></div>`;
@@ -1932,7 +2004,30 @@ function renderChecklist() {
 
 function toggleChecklistItem(id, el) {
   checklistState[id] = el.checked;
-  renderChecklist();
+  // Actualizar solo los contadores de progreso sin re-renderizar los items
+  // (re-renderizar destruiría el DOM y la animación CSS no se ejecutaría)
+  const tarea = checklistTareas.find(t => t.id === id);
+  if (tarea) updateChkSectionProgress(tarea.tipo);
+}
+
+function updateChkSectionProgress(tipo) {
+  const section = document.querySelector(`.chk-section[data-tipo="${tipo}"]`);
+  if (!section) return;
+  const items = checklistTareas.filter(t => t.bar === chkBar && t.tipo === tipo);
+  const done = items.filter(t => !!checklistState[t.id]).length;
+  const total = items.length;
+  const isComplete = done === total;
+  const subEl = section.querySelector('.chk-section-sub');
+  if (subEl) {
+    subEl.textContent = isComplete ? '¡Completado!' : `${done} de ${total} tareas`;
+    subEl.className = `chk-section-sub${isComplete ? ' done' : ''}`;
+  }
+  const oldRing = section.querySelector('.chk-progress-ring');
+  if (oldRing) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = progressRing(done, total);
+    oldRing.replaceWith(tmp.firstChild);
+  }
 }
 
 // ─── Calculadora de cierre de caja ──────────────────────────────
@@ -1998,17 +2093,18 @@ function fmtEUR(n) {
 }
 
 function recalcCaja() {
-  let totalEfectivo = 0;
+  let totalCents = 0;
   DENOMINACIONES.forEach(d => {
     const idAttr = `den-${String(d).replace('.','_')}`;
     const cant = parseInt(document.getElementById(idAttr).value) || 0;
-    const sub = cant * d;
-    totalEfectivo += sub;
-    document.getElementById(`${idAttr}-sub`).textContent = fmtEUR(sub);
+    const subCents = cant * Math.round(d * 100);
+    totalCents += subCents;
+    document.getElementById(`${idAttr}-sub`).textContent = fmtEUR(subCents / 100);
   });
-  const visas = parseFloat(document.getElementById('caja-tarjetas').value) || 0;
-  const ventaTotal = totalEfectivo + visas;
-  const totalRecepcion = totalEfectivo - fondoCaja;
+  const totalEfectivo = totalCents / 100;
+  const visas = Math.round((parseFloat(document.getElementById('caja-tarjetas').value) || 0) * 100) / 100;
+  const ventaTotal = Math.round((totalEfectivo + visas) * 100) / 100;
+  const totalRecepcion = Math.round((totalEfectivo - fondoCaja) * 100) / 100;
 
   document.getElementById('caja-efectivo-total').value = fmtEUR(totalEfectivo);
   document.getElementById('caja-venta-total').value = fmtEUR(ventaTotal);
@@ -2090,7 +2186,7 @@ async function renderChecklistAdmin() {
     if (!items.length) return;
     html += `<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);padding:10px 0 4px;">${label}</div>
     <div class="card" style="margin-bottom:8px;"><table><tbody>${items.map(t => `<tr>
-      <td>${t.descripcion}</td>
+      <td>${esc(t.descripcion)}</td>
       <td style="text-align:right;width:120px;">
         <button class="btn-secondary btn-sm" style="margin-right:4px;" onclick="openEditTareaChecklist('${t.id}')">✏️</button>
         <button class="btn-danger btn-sm" onclick="deleteTareaChecklist('${t.id}')">✕</button>
@@ -2112,11 +2208,12 @@ function openEditTareaChecklist(id) {
 }
 
 async function saveTareaChecklist() {
+  if (adminSaving) return; adminSaving = true;
   const id = document.getElementById('tarea-chk-id').value;
   const bar = document.getElementById('tarea-chk-bar').value;
   const tipo = document.getElementById('tarea-chk-tipo').value;
   const descripcion = document.getElementById('tarea-chk-desc').value.trim();
-  if (!descripcion) { alert('Escribe una descripción'); return; }
+  if (!descripcion) { adminSaving = false; alert('Escribe una descripción'); return; }
   try {
     if (id) {
       await db('tareas_checklist', 'PATCH', { bar, tipo, descripcion }, `?id=eq.${id}`);
@@ -2128,6 +2225,7 @@ async function saveTareaChecklist() {
     await loadChecklistTareas();
     renderChecklistAdmin();
   } catch(e) { alert('❌ Error al guardar la tarea.'); }
+  finally { adminSaving = false; }
 }
 
 async function deleteTareaChecklist(id) {
@@ -2149,12 +2247,11 @@ async function guardarFondoCaja() {
   const val = parseFloat(document.getElementById('admin-fondo-caja').value);
   if (isNaN(val) || val < 0) { alert('Introduce un importe válido'); return; }
   try {
-    const existing = await db('config', 'GET', null, '?clave=eq.fondo_caja');
-    if (existing && existing.length) {
-      await db('config', 'PATCH', { valor: String(val) }, '?clave=eq.fondo_caja');
-    } else {
-      await db('config', 'POST', { clave: 'fondo_caja', valor: String(val) });
-    }
+    await fetch(`${SUPA_URL}/rest/v1/config`, {
+      method: 'POST',
+      headers: { ...headers, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify({ clave: 'fondo_caja', valor: String(val) })
+    });
     fondoCaja = val;
     alert('✓ Fondo de caja actualizado');
   } catch(e) { alert('❌ Error al guardar. ¿Existe la tabla "config" en Supabase?'); }
