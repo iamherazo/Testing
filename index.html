@@ -248,6 +248,41 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .skeleton-row .skeleton-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(90deg, var(--bg3) 25%, var(--border2) 50%, var(--bg3) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease-in-out infinite; }
 .skeleton-row .skeleton-text { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 
+/* ====== CHECKLIST CIERRE (selector de bar + acordeón con progreso) ====== */
+.chk-bar-row { display: flex; gap: 8px; }
+.chk-bar-pill { flex: 1; padding: 11px 12px; border-radius: 980px; border: 1.5px solid var(--border2); background: var(--bg2); font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; transition: all .15s; color: var(--text2); -webkit-user-select: none; user-select: none; }
+.chk-bar-pill.active { color: #fff; border-color: transparent; }
+.chk-bar-pill.active.piscina { background: var(--piscina); }
+.chk-bar-pill.active.lobby { background: var(--lobby); }
+
+.chk-section { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+.chk-section-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.chk-section-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.chk-section-info { flex: 1; min-width: 0; }
+.chk-section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+.chk-section-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.chk-section-sub.done { color: var(--green); font-weight: 600; }
+.chk-progress-ring { width: 36px; height: 36px; flex-shrink: 0; transform: rotate(-90deg); }
+.chk-progress-ring circle { fill: none; stroke-width: 3.5; }
+.chk-progress-ring .bg { stroke: var(--border2); }
+.chk-progress-ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .3s ease; }
+.chk-progress-ring.done .fg { stroke: var(--green); }
+.chk-arrow { color: var(--text3); font-size: 13px; transition: transform .2s; flex-shrink: 0; }
+.chk-arrow.open { transform: rotate(90deg); }
+
+.chk-items { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.chk-items.open { max-height: 2000px; }
+.chk-item { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-top: 0.5px solid var(--border); cursor: pointer; -webkit-user-select: none; user-select: none; transition: background .15s; }
+.chk-item:active { background: rgba(0,0,0,0.02); }
+.chk-item input { display: none; }
+.chk-checkbox { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; background: var(--bg2); }
+.chk-checkbox svg { width: 14px; height: 14px; opacity: 0; transform: scale(0.5); transition: all .15s; }
+.chk-item input:checked + .chk-checkbox { background: var(--green); border-color: var(--green); }
+.chk-item input:checked + .chk-checkbox svg { opacity: 1; transform: scale(1); }
+.chk-item-label { flex: 1; font-size: 14px; font-weight: 500; transition: all .15s; }
+.chk-item input:checked ~ .chk-item-label { color: var(--text3); text-decoration: line-through; }
+.chk-item:last-child { padding-bottom: 16px; }
+
 </style>
 </head>
 <body>
@@ -547,14 +582,9 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 
   <!-- CHECKLIST -->
   <div id="cierre-checklist" class="cierre-tab active">
-    <div class="card">
-      <div class="form-group" style="max-width:260px;">
-        <label>Bar</label>
-        <select id="chk-bar" onchange="renderChecklist()">
-          <option value="Bar Piscina">Bar Piscina</option>
-          <option value="Bar Lobby">Bar Lobby</option>
-        </select>
-      </div>
+    <div class="chk-bar-row" style="margin-bottom:14px;">
+      <div class="chk-bar-pill active piscina" data-bar="Bar Piscina" onclick="setChkBar('Bar Piscina', this)">🏊 Bar Piscina</div>
+      <div class="chk-bar-pill" data-bar="Bar Lobby" onclick="setChkBar('Bar Lobby', this)">🏨 Bar Lobby</div>
     </div>
     <div id="chk-list"><div class="loading"><div class="spinner"></div> Cargando checklist...</div></div>
   </div>
@@ -707,6 +737,8 @@ let personal = [], familias = [], productos = [], regimenes = [], pedidoLineas =
 let currentPedidoId = null;
 let checklistTareas = [];
 let checklistState = {}; // { [tareaId]: boolean } — en memoria, se resetea al recargar
+let chkBar = 'Bar Piscina';
+let chkOpenSection = 'apertura'; // acordeón: 'apertura' | 'cierre' | null
 let fondoCaja = 300;
 const DENOMINACIONES = [0.1,0.2,0.5,1,2,5,10,20,50,100,200,500];
 
@@ -1816,29 +1848,73 @@ async function loadChecklistTareas() {
   renderChecklist();
 }
 
+function setChkBar(bar, el) {
+  chkBar = bar;
+  document.querySelectorAll('.chk-bar-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderChecklist();
+}
+
+function toggleChkSection(tipo) {
+  chkOpenSection = (chkOpenSection === tipo) ? null : tipo;
+  renderChecklist();
+}
+
+// Genera el SVG de progreso circular (anillo)
+function progressRing(done, total) {
+  const r = 14, c = 2 * Math.PI * r;
+  const pct = total > 0 ? done / total : 0;
+  const offset = c * (1 - pct);
+  const isDone = total > 0 && done === total;
+  return `<svg class="chk-progress-ring${isDone?' done':''}" viewBox="0 0 36 36">
+    <circle class="bg" cx="18" cy="18" r="${r}"></circle>
+    <circle class="fg" cx="18" cy="18" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${offset}"></circle>
+  </svg>`;
+}
+
 function renderChecklist() {
-  const bar = document.getElementById('chk-bar').value;
   const c = document.getElementById('chk-list');
-  const tareas = checklistTareas.filter(t => t.bar === bar);
+  const tareas = checklistTareas.filter(t => t.bar === chkBar);
   if (!tareas.length) {
-    c.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><p>No hay tareas configuradas para este bar. Añádelas en Administrar → Tareas Checklist.</p></div>';
+    c.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><p>No hay tareas configuradas para este bar.<br>Añádelas en Administrar → Tareas Checklist.</p></div>';
     return;
   }
   const grupos = { apertura: [], cierre: [] };
   tareas.forEach(t => { (grupos[t.tipo] || (grupos[t.tipo] = [])).push(t); });
+
+  // Si la sección "abierta por defecto" no existe para este bar, abre la primera disponible
+  if (!grupos[chkOpenSection] || !grupos[chkOpenSection].length) {
+    chkOpenSection = grupos.apertura.length ? 'apertura' : (grupos.cierre.length ? 'cierre' : null);
+  }
+
   let html = '';
-  [['apertura','🌅 Apertura'], ['cierre','🌙 Cierre']].forEach(([tipo, label]) => {
+  [['apertura','🌅','Apertura', 'icon-amber'], ['cierre','🌙','Cierre', 'icon-purple']].forEach(([tipo, emoji, label, iconClass]) => {
     const items = grupos[tipo] || [];
     if (!items.length) return;
-    html += `<div class="card"><div class="card-title">${label}</div>`;
+    const done = items.filter(t => !!checklistState[t.id]).length;
+    const total = items.length;
+    const isOpen = chkOpenSection === tipo;
+    const isComplete = done === total;
+    html += `<div class="chk-section">
+      <div class="chk-section-header" onclick="toggleChkSection('${tipo}')">
+        <div class="chk-section-icon ${iconClass}">${emoji}</div>
+        <div class="chk-section-info">
+          <div class="chk-section-title">${label}</div>
+          <div class="chk-section-sub${isComplete?' done':''}">${isComplete ? '¡Completado!' : `${done} de ${total} tareas`}</div>
+        </div>
+        ${progressRing(done, total)}
+        <div class="chk-arrow${isOpen?' open':''}">›</div>
+      </div>
+      <div class="chk-items${isOpen?' open':''}">`;
     items.forEach(t => {
       const checked = !!checklistState[t.id];
-      html += `<label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;${checked?'opacity:.55;text-decoration:line-through;':''}">
-        <input type="checkbox" style="width:20px;height:20px;" ${checked?'checked':''} onchange="toggleChecklistItem('${t.id}', this)">
-        <span>${t.descripcion}</span>
+      html += `<label class="chk-item">
+        <input type="checkbox" ${checked?'checked':''} onchange="toggleChecklistItem('${t.id}', this)">
+        <span class="chk-checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+        <span class="chk-item-label">${t.descripcion}</span>
       </label>`;
     });
-    html += `</div>`;
+    html += `</div></div>`;
   });
   c.innerHTML = html;
 }
