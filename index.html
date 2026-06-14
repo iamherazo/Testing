@@ -406,17 +406,16 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 <div id="view-pedido-noche" class="view active">
   <div class="card">
     <div class="card-title">📋 Nuevo pedido de noche</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Camarero (encargado noche)</label>
-        <select id="pn-camarero"></select>
-      </div>
-      <div class="form-group">
-        <label>Bar</label>
-        <select id="pn-bar">
-          <option value="Bar Piscina">Bar Piscina</option>
-          <option value="Bar Lobby">Bar Lobby</option>
-        </select>
+    <div class="form-group">
+      <label>Camarero (encargado noche)</label>
+      <select id="pn-camarero"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>Bar</label>
+      <input type="hidden" id="pn-bar" value="Bar Piscina">
+      <div class="chk-bar-row">
+        <div class="chk-bar-pill active piscina" data-bar="Bar Piscina" onclick="setPnBar('Bar Piscina', this)">🏊 Bar Piscina</div>
+        <div class="chk-bar-pill lobby" data-bar="Bar Lobby" onclick="setPnBar('Bar Lobby', this)">🏨 Bar Lobby</div>
       </div>
     </div>
   </div>
@@ -584,7 +583,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div id="cierre-checklist" class="cierre-tab active">
     <div class="chk-bar-row" style="margin-bottom:14px;">
       <div class="chk-bar-pill active piscina" data-bar="Bar Piscina" onclick="setChkBar('Bar Piscina', this)">🏊 Bar Piscina</div>
-      <div class="chk-bar-pill" data-bar="Bar Lobby" onclick="setChkBar('Bar Lobby', this)">🏨 Bar Lobby</div>
+      <div class="chk-bar-pill lobby" data-bar="Bar Lobby" onclick="setChkBar('Bar Lobby', this)">🏨 Bar Lobby</div>
     </div>
     <div id="chk-list"><div class="loading"><div class="spinner"></div> Cargando checklist...</div></div>
   </div>
@@ -1052,6 +1051,18 @@ function clearPedido() {
   updateBadges();
 }
 
+// Pills de selección de bar en Pedido Noche
+function setPnBar(bar, el) {
+  document.getElementById('pn-bar').value = bar;
+  document.querySelectorAll('#view-pedido-noche .chk-bar-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+function resetPnBar() {
+  document.getElementById('pn-bar').value = 'Bar Piscina';
+  document.querySelectorAll('#view-pedido-noche .chk-bar-pill').forEach(p => p.classList.remove('active'));
+  document.querySelector('#view-pedido-noche .chk-bar-pill.piscina').classList.add('active');
+}
+
 let guardandoPedido = false;
 
 // Paso 1: valida selección y abre el modal de resumen (o el aviso de pedido pendiente existente)
@@ -1161,7 +1172,7 @@ async function guardarPedidoNuevo(lineas, camarero, bar) {
     alert(`✅ Pedido guardado para ${bar}`);
     clearPedido();
     document.getElementById('pn-camarero').value = '';
-    document.getElementById('pn-bar').value = 'Bar Piscina';
+    resetPnBar();
   } catch(e) {
     alert('❌ Error al guardar el pedido. Comprueba tu conexión e inténtalo de nuevo.');
   } finally {
@@ -1194,7 +1205,7 @@ async function guardarPedidoExistente(lineas, pedidoId, bar) {
     alert(`✅ Productos añadidos al pedido pendiente de ${bar}`);
     clearPedido();
     document.getElementById('pn-camarero').value = '';
-    document.getElementById('pn-bar').value = 'Bar Piscina';
+    resetPnBar();
   } catch(e) {
     alert('❌ Error al añadir al pedido. Comprueba tu conexión e inténtalo de nuevo.');
   } finally {
